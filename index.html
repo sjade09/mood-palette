@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MoodPalette Studio - 풍부한 감성 키워드 컬러 팔레트</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    * { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; }
+    
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #121216; }
+    ::-webkit-scrollbar-thumb { background: #2a2a38; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3f3f56; }
+    
+    .chip-hover { transition: flex 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s ease; }
+    .chip-hover:hover { flex: 1.6; transform: translateY(-2px); }
+  </style>
+</head>
+<body class="bg-[#121216] text-[#e1e1e6] min-h-screen pb-12">
+
+  <div class="max-w-5xl mx-auto px-4 py-8">
+    
+    <!-- Header -->
+    <header class="text-center mb-8">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#1e1e2a] border border-[#2e2e40] text-xs text-[#bd93f9] font-medium mb-3 shadow-inner">
+        🎨 만화 · 웹툰 · 일러스트레이터를 위한 초고밀도 색채 스튜디오
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#ff79c6] via-[#bd93f9] to-[#8be9fd] mb-2">
+        MoodPalette Studio
+      </h1>
+      <p class="text-sm sm:text-base text-[#8f93a2]">
+        50가지 이상의 감성 단어, 계절, 컨셉 키워드를 입력해 그림의 완벽한 컬러 셋을 찾아보세요
+      </p>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Left Column: Generator & Active Palette (7 cols) -->
+      <main class="lg:col-span-7 space-y-6">
+        
+        <!-- Search & Categorized Tag Presets -->
+        <section class="bg-[#1a1a24] p-5 sm:p-6 rounded-2xl border border-[#2a2a3b] shadow-lg">
+          <h2 class="text-base font-semibold text-[#8be9fd] mb-3 flex items-center justify-between">
+            <span class="flex items-center gap-2">🔍 키워드로 색감 탐색</span>
+            <span id="dictCountTag" class="text-xs text-[#8f93a2] font-normal">50+ 감성 테마 내장</span>
+          </h2>
+
+          <!-- Category Tabs for Preset Chips -->
+          <div class="flex gap-2 border-b border-[#2a2a3b] pb-2 mb-3 text-xs overflow-x-auto">
+            <button onclick="switchCategory('all')" id="cat-all" class="cat-btn px-2.5 py-1 rounded-md text-[#ff79c6] font-semibold bg-[#242434] whitespace-nowrap">전체</button>
+            <button onclick="switchCategory('nature')" id="cat-nature" class="cat-btn px-2.5 py-1 rounded-md text-[#8f93a2] hover:text-white whitespace-nowrap">자연/계절</button>
+            <button onclick="switchCategory('mood')" id="cat-mood" class="cat-btn px-2.5 py-1 rounded-md text-[#8f93a2] hover:text-white whitespace-nowrap">감성/무드</button>
+            <button onclick="switchCategory('concept')" id="cat-concept" class="cat-btn px-2.5 py-1 rounded-md text-[#8f93a2] hover:text-white whitespace-nowrap">컨셉/장르</button>
+            <button onclick="switchCategory('food')" id="cat-food" class="cat-btn px-2.5 py-1 rounded-md text-[#8f93a2] hover:text-white whitespace-nowrap">디저트/음료</button>
+          </div>
+
+          <!-- Preset Chips Container -->
+          <div id="presetChips" class="flex flex-wrap gap-1.5 mb-4 max-h-28 overflow-y-auto pr-1">
+            <!-- Preset chips loaded via JS -->
+          </div>
+
+          <!-- Search Input Box (글자색이 선명하게 보이도록 text-white 명시) -->
+          <div class="flex gap-2">
+            <input type="text" id="keywordInput" placeholder="단어 입력 (예: 장미, 우주, 딥블루, 오로라, 숲)" 
+                   onkeydown="if(event.key==='Enter') generateByKeyword()"
+                   class="flex-1 px-4 py-2.5 rounded-xl bg-[#121216] border border-[#323246] text-sm text-white placeholder-[#5a5a72] focus:outline-none focus:border-[#ff79c6] transition">
+            <button onclick="generateByKeyword()" class="px-5 py-2.5 rounded-xl bg-[#ff79c6] text-[#121216] text-sm font-bold hover:opacity-90 active:scale-95 transition shadow-md shadow-[#ff79c6]/10 whitespace-nowrap">
+              검색
+            </button>
+          </div>
+          
+          <button onclick="generateRandomPalette()" class="w-full mt-3 py-2.5 rounded-xl bg-[#252538] hover:bg-[#2d2d44] text-[#8be9fd] border border-[#353550] text-sm font-semibold flex items-center justify-center gap-2 transition">
+            🎲 완전 무작위 팔레트 추천
+          </button>
+        </section>
+
+        <!-- Active Palette Display -->
+        <section class="bg-[#1a1a24] p-5 sm:p-6 rounded-2xl border border-[#2a2a3b] shadow-lg">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <span id="paletteCategoryTag" class="text-[11px] px-2 py-0.5 rounded bg-[#2a2a3a] text-[#bd93f9] font-medium inline-block mb-1">감성 카테고리</span>
+              <h3 id="paletteTitle" class="text-lg font-bold text-[#ffb86c]">청량한 여름 바다</h3>
+              <p id="paletteDesc" class="text-xs text-[#8f93a2] mt-0.5">탁 트인 여름 바다와 투명한 파도의 파란빛 무드</p>
+            </div>
+            <button onclick="saveCurrentPalette()" class="px-3 py-1.5 rounded-lg bg-[#50fa7b]/10 border border-[#50fa7b]/30 text-[#50fa7b] text-xs font-semibold hover:bg-[#50fa7b]/20 transition flex items-center gap-1 shrink-0">
+              ⭐ 보관함 저장
+            </button>
+          </div>
+
+          <!-- Interactive Color Chips Container (모바일/PC 모두 가로 배열 유지 및 너비 보정) -->
+          <div id="colorChips" class="flex flex-row w-full h-28 sm:h-36 rounded-xl overflow-hidden shadow-2xl border border-[#2d2d40]">
+            <!-- Color Chips rendered by JS -->
+          </div>
+
+          <div id="toastMsg" class="text-center text-xs text-[#50fa7b] mt-3 h-4 font-medium transition-all duration-300">
+            💡 색상 칩을 클릭하면 HEX 코드가 클립보드에 복사됩니다!
+          </div>
+        </section>
+
+        <!-- Color Tester Canvas Scratchpad -->
+        <section class="bg-[#1a1a24] p-5 sm:p-6 rounded-2xl border border-[#2a2a3b] shadow-lg">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-base font-semibold text-[#f1fa8c] flex items-center gap-2">
+              <span>🖌️</span> 색감 테스트 캔버스
+            </h2>
+            <button onclick="clearCanvas()" class="text-xs px-2.5 py-1 rounded bg-[#2a2a38] hover:bg-[#38384d] text-[#8f93a2] transition">
+              지우기
+            </button>
+          </div>
+          <p class="text-xs text-[#8f93a2] mb-3">현재 팔레트 색상을 선택해 캔버스에 자유롭게 선과 면을 그려보세요.</p>
+
+          <div id="penColors" class="flex gap-2 mb-3">
+            <!-- Dynamic Pen Swatches -->
+          </div>
+
+          <div class="w-full h-36 bg-[#121216] rounded-xl border border-[#2a2a38] overflow-hidden relative">
+            <canvas id="sketchCanvas" class="w-full h-full cursor-crosshair"></canvas>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- Right Column: Saved Palettes & Dictionary Info (5 cols) -->
+      <aside class="lg:col-span-5 space-y-6">
+        <div class="bg-[#1a1a24] p-5 sm:p-6 rounded-2xl border border-[#2a2a3b] shadow-lg sticky top-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-semibold text-[#bd93f9] flex items-center gap-2">
+              <span>📚</span> 마이 팔레트 보관함
+            </h2>
+            <span id="savedCount" class="text-xs px-2 py-0.5 rounded-full bg-[#2a2a3b] text-[#bd93f9] font-medium">0개</span>
+          </div>
+
+          <!-- Saved Palettes Scroll Area -->
+          <div id="savedPalettesList" class="space-y-3.5 max-h-[560px] overflow-y-auto pr-1">
+            <!-- Saved items loaded via JS -->
+          </div>
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-xs text-[#56566c] border-t border-[#1e1e2a] pt-6">
+      <p>수행평가 제출용 프로젝트 | <strong>MoodPalette Studio</strong> (50+ 데이터베이스 탑재 버전)</p>
+      <p class="mt-1">진로 연계: 만화 · 웹툰 · 일러스트레이션 계열 (디지털 색채학 워크플로우)</p>
+    </footer>
+
+  </div>
+
+  <script>
+    const paletteDatabase = [
+      { keys: ['바다', '해변', '파도', '오션', '여름바다'], name: "청량한 여름 바다", category: "자연/계절", desc: "투명하고 깊은 여름 바다와 차가운 파도의 청량함", colors: ["#003566", "#008000", "#00b4d8", "#90e0ef", "#caf0f8"] },
+      { keys: ['심해', '심해어', '깊은바다'], name: "고요한 심해속 아비스", category: "자연/계절", desc: "빛이 닿지 않는 영원한 심해의 어둠과 아득함", colors: ["#03045e", "#0a1128", "#001f54", "#034078", "#1282a2"] },
+      { keys: ['숲', '나무', '삼림', '이끼', '신록'], name: "울창한 태고의 숲", category: "자연/계절", desc: "짙은 나무 그늘과 이끼 낀 태고의 푸른 생명력", colors: ["#1b4332", "#2d6a4f", "#40916c", "#52b788", "#74c69d"] },
+      { keys: ['단풍', '가을', '낙엽', '만추'], name: "노을빛 가을 단풍", category: "자연/계절", desc: "붉게 물든 단풍잎과 바스락거리는 낙엽 감성", colors: ["#6b0504", "#a31621", "#d62828", "#f77f00", "#fcbf49"] },
+      { keys: ['봄', '벚꽃', '사쿠라', '봄날'], name: "화사한 봄날의 벚꽃", category: "자연/계절", desc: "봄바람에 흩날리는 분홍빛 벚꽃 잎사귀", colors: ["#ffb703", "#ffb5a7", "#fcd5ce", "#f8edeb", "#f9bec7"] },
+      { keys: ['겨울', '눈', '설원', '서리', '빙하'], name: "차가운 고요의 설원", category: "자연/계절", desc: "흰 눈으로 덮인 만년설과 푸른 얼음 결정", colors: ["#10002b", "#240046", "#3c096c", "#5a189a", "#e0aaff"] },
+      { keys: ['노을', '석양', '일몰', '황혼'], name: "해질녘 붉은 석양", category: "자연/계절", desc: "지평선 너머 퍼지는 붉고 보랏빛의 그라데이션", colors: ["#2b1055", "#7597de", "#ff6e7f", "#bfe9ff", "#fbaab1"] },
+      { keys: ['하늘', '구름', '청공', '맑음'], name: "쾌청한 맑은 하늘", category: "자연/계절", desc: "구름 한 점 없이 탁 트인 하늘의 맑은 톤", colors: ["#0077b6", "#0096c7", "#03045e", "#48cae4", "#ade8f4"] },
+      { keys: ['우주', '은하수', '성운', '갤럭시'], name: "신비로운 우주의 성운", category: "자연/계절", desc: "칠흑 같은 밤하늘 속 찬란하게 빛나는 별자리", colors: ["#0b090a", "#161a1d", "#660708", "#a4161a", "#e5383b"] },
+      { keys: ['오로라', '극광'], name: "환상적인 극지 오로라", category: "자연/계절", desc: "밤하늘을 넘나드는 에메랄드빛과 자수정 빛 무드", colors: ["#051923", "#003554", "#006494", "#0582ca", "#00a6fb"] },
+      { keys: ['비', '장마', '소나기', '먹구름'], name: "비 내리는 도시의 오후", category: "자연/계절", desc: "촉촉이 젖은 아스팔트와 젖은 공기의 감성", colors: ["#2b2d42", "#8d99ae", "#edf2f4", "#ef233c", "#d90429"] },
+      { keys: ['사막', '모래', '오아시스'], name: "황금빛 황량한 사막", category: "자연/계절", desc: "뜨거운 태양 아래 타오르는 붉은 모래언덕", colors: ["#9a031e", "#5f0f40", "#fb8b24", "#e36414", "#0f4c5c"] },
+      { keys: ['꽃밭', '튤립', '화원'], name: "화려한 튤립 꽃밭", category: "자연/계절", desc: "생동감 넘치는 꽃잎들이 모여 이루는 다채로움", colors: ["#ff0054", "#ff5400", "#ffbd00", "#090088", "#00f5d4"] },
+      { keys: ['달', '월광', '달빛', '보름달'], name: "은은하게 비추는 월광", category: "자연/계절", desc: "어두운 수면 위로 산산이 부서지는 노란 달빛", colors: ["#000814", "#001d3d", "#003566", "#ffc300", "#ffd60a"] },
+      { keys: ['장미', '로즈', '붉은장미'], name: "매혹적인 붉은 장미", category: "자연/계절", desc: "치명적이고 깊은 매력을 풍기는 클래식 레드", colors: ["#2b0908", "#5c0601", "#870007", "#c21807", "#ed2939"] },
+
+      { keys: ['새벽', '고요', '새벽녘'], name: "고요한 새벽의 감성", category: "감성/무드", desc: "세상이 잠든 고요함과 서서히 밝아오는 푸른빛", colors: ["#1d3557", "#457b9d", "#a8dadc", "#f1faee", "#e63946"] },
+      { keys: ['파스텔', '드림', '소프트'], name: "꿈결 같은 소프트 파스텔", category: "감성/무드", desc: "동화 속에 들어온 듯 부드럽고 따스한 컬러", colors: ["#ffcad4", "#ffe5ec", "#f4acb7", "#9e8fb2", "#b5e2fa"] },
+      { keys: ['몽환', '환상', '몽상'], name: "몽환적인 밤의 판타지", category: "감성/무드", desc: "현실과 꿈의 경계에 있는 아련한 퍼플 라벤더", colors: ["#31111d", "#5c1d30", "#e43b44", "#f77622", "#feae34"] },
+      { keys: ['따뜻함', '포근함', '온기', '휴식'], name: "포근한 보일러 온기", category: "감성/무드", desc: "따뜻한 이불속에서 느끼는 안락한 아이보리 톤", colors: ["#ddb892", "#b08968", "#7f5539", "#9c6644", "#e6ccb2"] },
+      { keys: ['시크', '모던', '모노'], name: "모던 앤 시크 모노톤", category: "감성/무드", desc: "도시적이고 절제된 묵직한 그레이스케일", colors: ["#161a1d", "#0b090a", "#660708", "#a4161a", "#b7094c"] },
+      { keys: ['우울', '슬픔', '블루스'], name: "비가 개기 전의 우울", category: "감성/무드", desc: "차분하게 가라앉아 감성을 자극하는 차분한 블루", colors: ["#141326", "#2d2a4a", "#4c4870", "#76719c", "#a9a4cf"] },
+      { keys: ['청춘', '풋풋', '소년', '소녀'], name: "싱그러운 청춘의 한 페이지", category: "감성/무드", desc: "풋풋한 학원물 애니메이션의 한 장면 같은 색감", colors: ["#38b000", "#70e000", "#9ef01a", "#ccff33", "#007200"] },
+      { keys: ['신비', '비밀', '주술'], name: "신비로운 자수정 구슬", category: "감성/무드", desc: "비밀스러운 매력을 가진 차가운 보랏빛 무드", colors: ["#10002b", "#240046", "#3c096c", "#7b2cbf", "#9d4edd"] },
+      { keys: ['레트로', '80년대', '시티팝'], name: "80s 네온 시티팝", category: "감성/무드", desc: "화려한 카세트테이프 시대의 레트로 감성", colors: ["#f72585", "#7209b7", "#3a0ca3", "#4361ee", "#4cc9f0"] },
+      { keys: ['사랑', '설렘', '핑크', '연애'], name: "달콤한 설렘의 순간", category: "감성/무드", desc: "볼이 붉어지는 사랑의 순간을 담은 마젠타 톤", colors: ["#ff758f", "#ff4d6d", "#c9184a", "#a4133c", "#800f2f"] },
+      { keys: ['빈티지', '클래식', '오래된'], name: "빛바랜 빈티지 아카이브", category: "감성/무드", desc: "오래된 앨범 속 빛바랜 필름 사진의 감성", colors: ["#a3b18a", "#588157", "#3a5a40", "#344e41", "#dad7cd"] },
+      { keys: ['다크', '어둠', '심연'], name: "다크 아카데미아", category: "감성/무드", desc: "고전 서재의 묵직한 고풍스러움과 중후함", colors: ["#1b1b1e", "#373737", "#c4fff9", "#68d8d6", "#07b1ca"] },
+      { keys: ['민트', '페퍼민트', '상쾌'], name: "상쾌한 톡 쏘는 민트", category: "감성/무드", desc: "기분까지 맑아지는 페퍼민트의 스피어 그린", colors: ["#c7f9cc", "#80ed99", "#57cc99", "#38a3a5", "#22577a"] },
+      { keys: ['열정', '에너지', '비비드'], name: "비비드 에너지 팝", category: "감성/무드", desc: "시선을 사로잡는 강력한 원색의 조화", colors: ["#ff0054", "#9e0059", "#ffbd00", "#ff5400", "#390099"] },
+      { keys: ['골드', '럭셔리', '황금'], name: "찬란한 왕관의 골드", category: "감성/무드", desc: "고귀하고 눈부신 황금빛 럭셔리 포인트", colors: ["#ffb703", "#fb8500", "#023047", "#219ebc", "#8ecae6"] },
+
+      { keys: ['사이버펑크', 'SF', '네온', '미래'], name: "네온사인 사이버펑크", category: "컨셉/장르", desc: "어두운 미래 도시를 채우는 찌릿한 네온 핑크와 시안", colors: ["#ff007f", "#7928ca", "#0df9ff", "#ffe600", "#121216"] },
+      { keys: ['판타지', '마법', '모험'], name: "전설 속 판타지 대륙", category: "컨셉/장르", desc: "용과 마법이 숨 쉬는 광활한 서사시의 분위기", colors: ["#2b2d42", "#d90429", "#edf2f4", "#8d99ae", "#2b2d42"] },
+      { keys: ['스릴러', '공포', '호러', '피'], name: "서늘한 고딕 호러", category: "컨셉/장르", desc: "심장을 조여오는 서늘함과 붉은 혈흔의 대비", colors: ["#0b090a", "#161a1d", "#660708", "#a4161a", "#ba181b"] },
+      { keys: ['동화', '아이', '메르헨'], name: "알록달록 메르헨 동화", category: "컨셉/장르", desc: "그림책에서 튀어나온 듯 아기자기한 색감", colors: ["#ffbe0b", "#fb5607", "#ff006e", "#8338ec", "#3a86ff"] },
+      { keys: ['동양풍', '한복', '전통', '무협'], name: "단아한 조선의 묵향", category: "컨셉/장르", desc: "먹선과 단청이 어우러진 깊이 있는 전통 색감", colors: ["#1c1c1c", "#8b0000", "#0047ab", "#daa520", "#f5f5dc"] },
+      { keys: ['서부', '웨스턴', '카우보이'], name: "황야의 카우보이", category: "컨셉/장르", desc: "건조한 대지와 가죽 향이 풍기는 빈티지 오렌지", colors: ["#463f3a", "#8a817c", "#bcb8b1", "#f4f1de", "#e07a5f"] },
+      { keys: ['스팀펑크', '증기', '태엽'], name: "태엽 시계의 스팀펑크", category: "컨셉/장르", desc: "황동 기어와 가죽, 연기가 뿜어져 나오는 클래식", colors: ["#2b1e16", "#6f4e37", "#b8860b", "#cd853f", "#d2b48c"] },
+      { keys: ['포스트아포칼립스', '폐허', '멸망'], name: "황량한 폐허의 아포칼립스", category: "컨셉/장르", desc: "문명이 무너진 뒤 남아있는 녹슨 철과 잿빛 하늘", colors: ["#3d3a37", "#5c5752", "#8c857b", "#4a5d4e", "#7f4f24"] },
+      { keys: ['너드', '픽셀', '도트'], name: "8비트 레트로 아케이드", category: "컨셉/장르", desc: "고전 오락기 화면 속 통통 튀는 픽셀 컬러", colors: ["#000000", "#00a8a8", "#a800a8", "#a85400", "#545454"] },
+      { keys: ['히어로', '코믹스', '마블'], name: "아메리칸 코믹스 히어로", category: "컨셉/장르", desc: "히어로 슈트처럼 선명하고 강렬한 원색 팝업", colors: ["#d90429", "#0077b6", "#ffb703", "#000000", "#ffffff"] },
+
+      { keys: ['커피', '카페', '에스프레소', '라떼'], name: "향긋한 로스팅 카페", category: "디저트/음료", desc: "갓 뽑은 에스프레소와 부드러운 우유 거품", colors: ["#2b1a13", "#4a2c20", "#7f4f24", "#936639", "#c6ac8f"] },
+      { keys: ['초콜릿', '카카오', '초코'], name: "진한 다크 초콜릿", category: "디저트/음료", desc: "입안에서 녹아내리는 딥 브라운 디저트", colors: ["#1c0a00", "#361500", "#4b1e00", "#602900", "#cc8b65"] },
+      { keys: ['말차', '녹차', '그린티'], name: "쌉싸름한 쿄토 말차", category: "디저트/음료", desc: "진하게 우려낸 녹차 가루와 녹색 디저트", colors: ["#2d3a27", "#4a5d3f", "#6b8e50", "#8cb071", "#d8f3dc"] },
+      { keys: ['체리', '체리파이'], name: "상큼한 체리 콕", category: "디저트/음료", desc: "탐스러운 체리 열매의 붉은 과즙 톤", colors: ["#590d22", "#800f2f", "#a4133c", "#c9184a", "#ff4d6d"] },
+      { keys: ['레몬', '유자', '상큼'], name: "톡 터지는 상큼한 레몬", category: "디저트/음료", desc: "신선한 비타민이 느껴지는 노란 과일 톤", colors: ["#e9d8a6", "#ee9b00", "#ca6702", "#bb3e03", "#ae2012"] },
+      { keys: ['와인', '포도주', '버건디'], name: "숙성된 뱅쇼 와인", category: "디저트/음료", desc: "오크통에서 익은 깊고 매혹적인 딥 레드", colors: ["#2e0014", "#4a001f", "#670029", "#850038", "#a30047"] },
+      { keys: ['피치', '복숭아'], name: "달콤한 과즙 백도 복숭아", category: "디저트/음료", desc: "말랑하게 익은 핑크빛 복숭아 껍질", colors: ["#ffcad4", "#f4acb7", "#e76f51", "#f4a261", "#e9c46a"] },
+      { keys: ['밀크티', '타피오카'], name: "대만 로얄 밀크티", category: "디저트/음료", desc: "달콤하고 부드러운 홍차와 타피오카 펄", colors: ["#b08968", "#7f5539", "#9c6644", "#ddb892", "#ede0d4"] },
+      { keys: ['마카롱', '캔디', '사탕'], name: "파스텔 마카롱 세트", category: "디저트/음료", desc: "달콤한 디저트 숍의 보송보송한 컬러 칩", colors: ["#cdb4db", "#ffc8dd", "#ffafcc", "#bde0fe", "#a2d2ff"] },
+      { keys: ['소다', '탄산', '시원한음료'], name: "톡 쏘는 블루 하와이 소다", category: "디저트/음료", desc: "얼음이 둥둥 뜬 청량하고 투명한 음료", colors: ["#00b4d8", "#48cae4", "#90e0ef", "#ade8f4", "#caf0f8"] }
+    ];
+
+    let currentColors = [];
+    let currentPaletteName = "";
+    let activePenColor = "#ff79c6";
+    let activeCategory = 'all';
+
+    window.onload = () => {
+      renderPresetChips();
+      searchKeyword('바다');
+      loadSavedPalettes();
+      initCanvas();
+    };
+
+    function switchCategory(cat) {
+      activeCategory = cat;
+      document.querySelectorAll('.cat-btn').forEach(b => {
+        b.classList.remove('text-[#ff79c6]', 'bg-[#242434]', 'font-semibold');
+        b.classList.add('text-[#8f93a2]');
+      });
+      const activeBtn = document.getElementById(`cat-${cat}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-[#8f93a2]');
+        activeBtn.classList.add('text-[#ff79c6]', 'bg-[#242434]', 'font-semibold');
+      }
+      renderPresetChips();
+    }
+
+    function renderPresetChips() {
+      const container = document.getElementById('presetChips');
+      container.innerHTML = '';
+
+      const catMap = {
+        'nature': '자연/계절',
+        'mood': '감성/무드',
+        'concept': '컨셉/장르',
+        'food': '디저트/음료'
+      };
+
+      const filtered = activeCategory === 'all' 
+        ? paletteDatabase 
+        : paletteDatabase.filter(p => p.category === catMap[activeCategory]);
+
+      filtered.forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = "text-xs px-2.5 py-1 rounded-full bg-[#242434] hover:bg-[#323248] text-[#bd93f9] border border-[#373750] transition whitespace-nowrap";
+        btn.innerText = `#${p.keys[0]}`;
+        btn.onclick = () => searchKeyword(p.keys[0]);
+        container.appendChild(btn);
+      });
+    }
+
+    function searchKeyword(keyword) {
+      document.getElementById('keywordInput').value = keyword;
+      generateByKeyword();
+    }
+
+    function generateByKeyword() {
+      const input = document.getElementById('keywordInput').value.trim().toLowerCase();
+      if (!input) {
+        showToast('⚠️ 검색할 감성 키워드를 입력해 주세요!');
+        return;
+      }
+
+      let matched = paletteDatabase.find(p => p.keys.some(k => input.includes(k) || k.includes(input)));
+
+      if (matched) {
+        renderPalette(matched.name, matched.colors, matched.category, matched.desc);
+      } else {
+        const dynamicPalette = generateDynamicPalette(input);
+        renderPalette(dynamicPalette.name, dynamicPalette.colors, "맞춤 생성", dynamicPalette.desc);
+      }
+    }
+
+    function generateDynamicPalette(keyword) {
+      let hash = 0;
+      for (let i = 0; i < keyword.length; i++) {
+        hash = keyword.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const baseHue = Math.abs(hash) % 360;
+      
+      const colors = [];
+      for (let i = 0; i < 5; i++) {
+        let h = (baseHue + (i * 25)) % 360;
+        let s = 55 + (i * 5);
+        let l = 30 + (i * 12);
+        colors.push(hslToHex(h, s, l));
+      }
+
+      return {
+        name: `'${keyword}' 감성 맞춤 컬러`,
+        desc: `입력하신 '${keyword}'의 단어 파동을 분석하여 조화롭게 생성된 색상 세트입니다.`,
+        colors: colors
+      };
+    }
+
+    function hslToHex(h, s, l) {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => {
+        const k = (n + h / 30) % 12;
+        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+        return Math.round(255 * color).toString(16).padStart(2, '0');
+      };
+      return `#${f(0)}${f(8)}${f(4)}`;
+    }
+
+    function generateRandomPalette() {
+      const randomItem = paletteDatabase[Math.floor(Math.random() * paletteDatabase.length)];
+      renderPalette(randomItem.name, randomItem.colors, randomItem.category, randomItem.desc);
+    }
+
+    function renderPalette(title, colors, category = "감성 테마", desc = "") {
+      currentPaletteName = title;
+      currentColors = colors;
+
+      document.getElementById('paletteTitle').innerText = title;
+      document.getElementById('paletteCategoryTag').innerText = category;
+      document.getElementById('paletteDesc').innerText = desc || "작품에 특별한 분위기를 불어넣는 색조 세트입니다.";
+
+      const container = document.getElementById('colorChips');
+      container.innerHTML = '';
+
+      colors.forEach(hex => {
+        const chip = document.createElement('div');
+        chip.className = 'chip-hover flex-1 flex flex-col justify-end items-center pb-3 text-xs font-bold cursor-pointer select-none';
+        chip.style.backgroundColor = hex;
+        chip.style.color = isLightColor(hex) ? '#121216' : '#ffffff';
+        chip.innerText = hex.toUpperCase();
+
+        chip.onclick = () => copyToClipboard(hex);
+        container.appendChild(chip);
+      });
+
+      updatePenSwatches(colors);
+    }
+
+    function copyToClipboard(text) {
+      const el = document.createElement('textarea');
+      el.value = text.toUpperCase();
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+
+      showToast(`✨ ${text.toUpperCase()} 색상 코드가 클립보드에 복사되었습니다!`);
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toastMsg');
+      toast.innerText = message;
+      toast.style.opacity = '1';
+      setTimeout(() => {
+        toast.innerText = '💡 색상 칩을 클릭하면 HEX 코드가 클립보드에 복사됩니다!';
+      }, 2500);
+    }
+
+    function isLightColor(hex) {
+      const c = hex.substring(1);
+      const rgb = parseInt(c, 16);
+      const r = (rgb >> 16) & 0xff;
+      const g = (rgb >> 8) & 0xff;
+      const b = (rgb >> 0) & 0xff;
+      const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      return luma > 140;
+    }
+
+    function saveCurrentPalette() {
+      let saved = JSON.parse(localStorage.getItem('myPalettes') || '[]');
+      
+      if (saved.some(p => p.name === currentPaletteName && p.colors.join() === currentColors.join())) {
+        showToast('⚠️ 이미 보관함에 저장된 팔레트입니다!');
+        return;
+      }
+
+      saved.unshift({
+        id: Date.now(),
+        name: currentPaletteName,
+        colors: currentColors
+      });
+
+      localStorage.setItem('myPalettes', JSON.stringify(saved));
+      loadSavedPalettes();
+      showToast('⭐ 팔레트가 보관함에 저장되었습니다!');
+    }
+
+    function loadSavedPalettes() {
+      const saved = JSON.parse(localStorage.getItem('myPalettes') || '[]');
+      const container = document.getElementById('savedPalettesList');
+      document.getElementById('savedCount').innerText = `${saved.length}개`;
+
+      if (saved.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-10 text-xs text-[#5a5a72]">
+            저장된 팔레트가 없습니다.<br>'보관함 저장' 버튼을 눌러 나만의 색감을 모아보세요!
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = saved.map(p => `
+        <div class="bg-[#121216] p-3 rounded-xl border border-[#2a2a38]">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold text-[#e1e1e6] truncate max-w-[160px]">${p.name}</span>
+            <button onclick="deleteSavedPalette(${p.id})" class="text-[10px] text-[#ff5555] hover:underline">삭제</button>
+          </div>
+          <div class="flex h-8 rounded-lg overflow-hidden cursor-pointer shadow" onclick='renderPalette("${p.name}", ${JSON.stringify(p.colors)})'>
+            ${p.colors.map(c => `<div style="background-color: ${c}" class="flex-1" title="${c}"></div>`).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function deleteSavedPalette(id) {
+      let saved = JSON.parse(localStorage.getItem('myPalettes') || '[]');
+      saved = saved.filter(p => p.id !== id);
+      localStorage.setItem('myPalettes', JSON.stringify(saved));
+      loadSavedPalettes();
+      showToast('🗑️ 팔레트가 삭제되었습니다.');
+    }
+
+    let canvas, ctx, isDrawing = false;
+
+    function initCanvas() {
+      canvas = document.getElementById('sketchCanvas');
+      ctx = canvas.getContext('2d');
+      resizeCanvas();
+
+      window.addEventListener('resize', resizeCanvas);
+
+      canvas.addEventListener('mousedown', startDrawing);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('mouseleave', stopDrawing);
+
+      canvas.addEventListener('touchstart', (e) => { startDrawing(e.touches[0]); e.preventDefault(); });
+      canvas.addEventListener('touchmove', (e) => { draw(e.touches[0]); e.preventDefault(); });
+      canvas.addEventListener('touchend', stopDrawing);
+    }
+
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      clearCanvas();
+    }
+
+    function updatePenSwatches(colors) {
+      const container = document.getElementById('penColors');
+      container.innerHTML = '';
+      activePenColor = colors[0];
+
+      colors.forEach((hex, idx) => {
+        const dot = document.createElement('button');
+        dot.className = `w-6 h-6 rounded-full border-2 transition ${idx === 0 ? 'border-white scale-110' : 'border-transparent'}`;
+        dot.style.backgroundColor = hex;
+        dot.onclick = () => {
+          activePenColor = hex;
+          Array.from(container.children).forEach(c => c.classList.remove('border-white', 'scale-110'));
+          dot.classList.add('border-white', 'scale-110');
+        };
+        container.appendChild(dot);
+      });
+    }
+
+    function startDrawing(e) {
+      isDrawing = true;
+      const rect = canvas.getBoundingClientRect();
+      ctx.beginPath();
+      ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const rect = canvas.getBoundingClientRect();
+      ctx.strokeStyle = activePenColor;
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+      ctx.stroke();
+    }
+
+    function stopDrawing() { isDrawing = false; }
+    function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+  </script>
+</body>
+</html>
